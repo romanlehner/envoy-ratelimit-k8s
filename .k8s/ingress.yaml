@@ -5,16 +5,12 @@ metadata:
   namespace: default
   annotations:
     ingress.kubernetes.io/ssl-redirect: "false"
-    traefik.ingress.kubernetes.io/rewrite-target: /
+    #traefik.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
   - http:
       paths:
-      - path: /proxy
+      - path: /
         backend:
           serviceName: envoy-proxy
           servicePort: 8888
-      - path: /mock
-        backend:
-          serviceName: envoy-mock
-          servicePort: 9999
