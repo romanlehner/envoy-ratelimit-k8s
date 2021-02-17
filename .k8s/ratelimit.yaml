@@ -46,8 +46,9 @@ spec:
             - containerPort: 8081
             - containerPort: 6070
           volumeMounts:
-            - mountPath: /data/ratelimit/config
+            - mountPath: /data/ratelimit/config/example.yaml
               name: ratelimit-conf
+              subPath: example.yaml
       volumes:
         - name: ratelimit-conf
           configMap:
@@ -78,20 +79,20 @@ spec:
 ---
 apiVersion: v1
 data:
-  config.yaml: |
-    domain: mongo_cps
-    descriptors:
-      - key: database
-        value: users
-        rate_limit:
-          unit: second
-          requests_per_unit: 500
+  #config.yaml: |
+  #  domain: mongo_cps
+  #  descriptors:
+  #    - key: database
+  #      value: users
+  #      rate_limit:
+  #        unit: second
+  #        requests_per_unit: 500
 
-      - key: database
-        value: default
-        rate_limit:
-          unit: second
-          requests_per_unit: 500
+  #    - key: database
+  #      value: default
+  #      rate_limit:
+  #        unit: second
+  #        requests_per_unit: 500
   example.yaml: |
     domain: rl
     descriptors:
