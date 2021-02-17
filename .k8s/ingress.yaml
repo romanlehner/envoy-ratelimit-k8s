@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ratelimit-ingress
+  namespace: default
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+    traefik.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /proxy
+        backend:
+          serviceName: envoy-proxy
+          servicePort: 8888
+      - path: /mock
+        backend:
+          serviceName: envoy-mock
+          servicePort: 9999

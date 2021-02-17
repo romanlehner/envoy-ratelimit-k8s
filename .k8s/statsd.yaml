@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: statsd
+  name: statsd
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: statsd
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: statsd
+    spec:
+      containers:
+        - args:
+            - --statsd.mapping-config=/etc/statsd-exporter/conf.yaml
+          command:
+            - /bin/statsd_exporter
+          image: prom/statsd-exporter:v0.18.0
+          name: statsd
+          ports:
+            - containerPort: 9125
+            - containerPort: 9102
+          volumeMounts:
+            - mountPath: /etc/statsd-exporter/
+              name: statsd-conf
+      volumes:
+        - name: statsd-conf
+          configMap:
+            name: statsd-conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: statsd
+  namespace: default
+spec:
+  ports:
+    - name: "9125"
+      port: 9125
+      targetPort: 9125
+    - name: "9102"
+      port: 9102
+      targetPort: 9102
+  selector:
+    app: statsd
+
+---
+apiVersion: v1
+data:
+  conf.yaml: |
+    mappings: # Requires statsd exporter >= v0.6.0 since it uses the "drop" action.
+      - match:
+          "ratelimit.service.rate_limit.*.*.near_limit"
+        name: "ratelimit_service_rate_limit_near_limit"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+      - match:
+          "ratelimit.service.rate_limit.*.*.over_limit"
+        name: "ratelimit_service_rate_limit_over_limit"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+      - match:
+          "ratelimit.service.rate_limit.*.*.total_hits"
+        name: "ratelimit_service_rate_limit_total_hits"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+
+      - match:
+          "ratelimit.service.rate_limit.*.*.*.near_limit"
+        name: "ratelimit_service_rate_limit_near_limit"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+          key2: "$3"
+      - match:
+          "ratelimit.service.rate_limit.*.*.*.over_limit"
+        name: "ratelimit_service_rate_limit_over_limit"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+          key2: "$3"
+      - match:
+          "ratelimit.service.rate_limit.*.*.*.total_hits"
+        name: "ratelimit_service_rate_limit_total_hits"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+          key2: "$3"
+
+      - match: "ratelimit.service.call.should_rate_limit.*"
+        name: "ratelimit_service_should_rate_limit_error"
+        match_metric_type: counter
+        labels:
+          err_type: "$1"
+
+      - match: "ratelimit.service.config_load_success"
+        name: "ratelimit_service_config_load_success"
+        match_metric_type: counter
+      - match: "ratelimit.service.config_load_error"
+        name: "ratelimit_service_config_load_error"
+        match_metric_type: counter
+      - match: "ratelimit.service.config_load_error"
+        name: "ratelimit_service_config_load_error"
+        match_metric_type: counter
+      - match: "."
+        match_type: "regex"
+        action: "drop"
+        name: "dropped"
+kind: ConfigMap
+metadata:
+  name: statsd-conf
+  namespace: default
